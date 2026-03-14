@@ -1,41 +1,31 @@
-# Compiled Lua sources
-luac.out
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
 
-# luarocks build files
-*.src.rock
-*.zip
-*.tar.gz
+local function getClosestPlayer()
+    local closest = nil
+    local shortest = math.huge
 
-# Object files
-*.o
-*.os
-*.ko
-*.obj
-*.elf
+    for _,player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    closest = player
+                end
+            end
+        end
+    end
 
-# Precompiled Headers
-*.gch
-*.pch
+    return closest
+end
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.def
-*.exp
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
+RunService.RenderStepped:Connect(function()
+    local target = getClosestPlayer()
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+    end
+end)
